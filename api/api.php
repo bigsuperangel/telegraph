@@ -51,7 +51,7 @@ if ($fileSize > $maxSize) {
 // 调用upload_image函数上传图片
 $imgpath = upload_image($filepath, $fileType, $file);
 if ($imgpath) {
-    $domains = ['img.selipoi.top','picture.atago.moe'];
+    $domains = ['photo.9394961.xyz'];
     $image_host = 'https://'. $domains[array_rand($domains)];
     $full_url = $image_host . $imgpath; // 完整的图片URL
 
@@ -60,14 +60,20 @@ if ($imgpath) {
 
     $result = array(
       "code" => 200,
-      "msg" => "上传成功",
+      "msg" => "success",
       "url" => $full_url,
       "timestamp" => $currentTime // 可以选择在结果中包含时间戳
     );
 
+        // 处理响应数据
+	$data = json_decode(json_encode($result), true);
     // 将IP地址、URL和时间戳写入到文件中
     $logLine = $currentTime . ", " . $clientIP . ", " . $full_url . "\n"; // 创建要写入的字符串，包含IP地址、URL和当前时间
     file_put_contents('urls.txt', $logLine, FILE_APPEND); // 写入文件
+    $html = typechoShare($full_url);
+    $txt = json_decode($html, true);
+    file_put_contents('logs.txt', $txt, FILE_APPEND); // 写入文件
+
 } else {
     $result = array(
       "code" => 201,
@@ -128,9 +134,22 @@ function upload_image($filepath, $fileType, $fileName) {
   curl_close($ch);
 
   $json = json_decode($response, true);
-  if ($json && isset($json[0]['src'])) {
+  if （$json && isset（$json[0]['src']）） {
     return $json[0]['src'];
   } else {
     return false;
   }
+}
+
+function typechoShare($params) {
+	file_put_contents('logs.txt', 'start', FILE_APPEND); // 写入文件
+	$ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, 'https://blog.nimabibifuck.link/typecho/share');
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, "picUrl=" . $params);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE); //不验证证书
+    $html = curl_exec($ch);
+    curl_close($ch);
+	return $html;
 }
